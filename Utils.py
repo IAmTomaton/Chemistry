@@ -2,11 +2,9 @@ import os
 import random
 import re
 
-import matplotlib
 import numpy as np
 import torch
 from PIL import Image
-from matplotlib import pyplot as plt
 from torch import nn
 from torch.utils.data import TensorDataset
 
@@ -48,25 +46,20 @@ def partition(x_train, y_train, n):
 
 
 def split_x_train(x_train, y_train, test_size):
-    # test_i = random.Random().sample(range(x_train.size()[0]), test_size)
-    test_i = [random.randint(0, x_train.shape[0] - 1) for _ in range(test_size)]
+    val_idexes = np.random.choice(np.arange(len(x_train)), test_size, replace=False)
 
-    # test_i = [68, 66, 67, 33, 59, 65, 35, 12, 32, 46, 3, 42, 13, 73, 37, 5]
+    val_idexes.sort()
+    print('val files', val_idexes)
 
-    # test_i = [0, 4, 7, 9, 12, 14, 17, 19, 23, 24, 50, 51, 58, 63, 68, 70]
+    x_val = x_train[val_idexes]
+    y_val = y_train[val_idexes]
 
-    test_i.sort()
-    print('test files', test_i)
-
-    x_test = x_train[test_i]
-    y_test = y_train[test_i]
-
-    mask = np.ones(len(x_train), np.bool)
-    mask[test_i] = 0
+    mask = np.ones(len(x_train), bool)
+    mask[val_idexes] = 0
     new_x_train = x_train[mask]
     new_y_train = y_train[mask]
 
-    return new_x_train, new_y_train, x_test, y_test
+    return new_x_train, new_y_train, x_val, y_val
 
 
 def convert_x_train(x_train, columns=None):
@@ -100,6 +93,9 @@ def load_data_phase(data_folder, keys, size):
     x_train_list = []
     y_train_list = []
 
+    shift = 2
+    shifted_size = size[0] + shift * 2, size[1] + shift * 2
+
     params_strings = set()
     for file_name in os.listdir(data_folder):
         if 'result' in file_name:
@@ -111,14 +107,14 @@ def load_data_phase(data_folder, keys, size):
         x_max = 0.8
         y_max = 0.2
         phases = np.array([
-            draw_phase(f'{data_folder}\\{params_string}_results_AFM_contour.dat', size, x_max, y_max),
-            draw_phase(f'{data_folder}\\{params_string}_results_CO_contour.dat', size, x_max, y_max),
-            draw_phase(f'{data_folder}\\{params_string}_results_FL_contour.dat', size, x_max, y_max),
-            draw_phase(f'{data_folder}\\{params_string}_results_SC_contour.dat', size, x_max, y_max),
+            draw_phase(f'{data_folder}\\{params_string}_results_AFM_contour.dat', shifted_size, x_max, y_max),
+            draw_phase(f'{data_folder}\\{params_string}_results_CO_contour.dat', shifted_size, x_max, y_max),
+            draw_phase(f'{data_folder}\\{params_string}_results_FL_contour.dat', shifted_size, x_max, y_max),
+            draw_phase(f'{data_folder}\\{params_string}_results_SC_contour.dat', shifted_size, x_max, y_max),
         ])
 
-        # figure = plt.figure(figsize=(6, 6))
-        # a = figure.add_subplot(1, 1, 1)
+        phases = phases[:, shift:size[0] + shift, shift:size[1] + shift]
+
         palette = np.array([[255, 255, 255],
                             [255, 0, 0],
                             [0, 255, 0],
@@ -129,16 +125,11 @@ def load_data_phase(data_folder, keys, size):
         for i in range(4):
             image += palette[np.flip(phases[i].transpose(), 0) * (i + 1)] / 2
 
-        # for i, phase in enumerate(phases):
-        #     image += palette[np.flip(phase.transpose(), 0)]
         im = Image.fromarray(image.astype(np.uint8))
         im.save(f'{data_folder}\\{params_string}_plot.png')
 
         x_train_list.append(phases)
     x_train_list, y_train_list = np.array(x_train_list), np.array(y_train_list)
-    print(len(x_train_list))
-    # sort = y_train_list.argsort(axis=0).reshape((-1,))
-    # return x_train_list[sort], y_train_list[sort]
     return x_train_list, y_train_list
 
 

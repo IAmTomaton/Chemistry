@@ -61,7 +61,8 @@ def draw_phase(file, size, x_max, y_max):
                 x_2 = int(intersections[j * 2 + 1] / x_max * width)
                 if x_1 > x_2:
                     x_1, x_2 = x_2, x_1
-                for x in range(x_1, x_2 + 1):
+
+                for x in range(x_1, min(x_2 + 1, width)):
                     phase[x][i] = 1
     # a = figure.add_subplot(1, 2, 2)
     # a.matshow(np.flip(phase.transpose(), 0))
