@@ -20,6 +20,7 @@ def close_curve(curve):
     return curve
 
 
+# Draws a phase along a contour from a file
 def draw_phase(file, size, x_max, y_max):
     width = size[0]
     height = size[1]

@@ -8,7 +8,7 @@ from PIL import Image
 from torch import nn
 from torch.utils.data import TensorDataset
 
-from draw_phase import draw_phase
+from file_to_phase import draw_phase
 
 
 def seed(seed=1):
@@ -89,6 +89,7 @@ def load_data(data_folder, keys, columns=None):
     return np.array(x_train_list), np.array(y_train_list)
 
 
+# Generation of phase diagrams from the training set
 def load_data_phase(data_folder, keys, size):
     x_train_list = []
     y_train_list = []
@@ -153,3 +154,17 @@ def model_to_log(model):
     if type(model) is not nn.Sequential:
         return model
     return list(map(lambda s: model_to_log(s), model))
+
+
+def read_phase_file(file_name):
+    with open(file_name, 'r') as file:
+        array = list((map(lambda l: list(map(int, l.split(','))), file.readlines())))
+    width = max(map(lambda l: l[1], array)) + 1
+    height = max(map(lambda l: l[0], array)) + 1
+    nparray = np.zeros((4, height, width))
+
+    for y, x, *phases in array:
+        for i, c in enumerate(phases):
+            nparray[i, y, x] = c
+
+    return nparray
