@@ -13,7 +13,7 @@ class App(tk.Tk):
         self.phases_size = (64, 64)
         self.height, self.width = self.canvas_size
         self.phase_count = 4
-        self.phase_colors = [(0, 255, 255), (255, 255, 0), (255, 0, 255), (0, 255, 0)]
+        self.phase_colors = [(0, 255, 255), (255, 255, 0), (0, 255, 0), (255, 0, 255)]
         self.phases = np.zeros((4, *self.phases_size), dtype=int)
         self.imageTk = None
         self.radius = 5
@@ -52,18 +52,22 @@ class App(tk.Tk):
         button.pack()
         button = ttk.Radiobutton(phases, text='CO blue', value=1, variable=self.phase, command=self.update_canvas)
         button.pack()
-        button = ttk.Radiobutton(phases, text='SC green', value=2, variable=self.phase, command=self.update_canvas)
+        button = ttk.Radiobutton(phases, text='FL pink', value=2, variable=self.phase, command=self.update_canvas)
         button.pack()
-        button = ttk.Radiobutton(phases, text='FL pink', value=3, variable=self.phase, command=self.update_canvas)
+        button = ttk.Radiobutton(phases, text='SC green', value=3, variable=self.phase, command=self.update_canvas)
         button.pack()
 
         file_settings = tk.Frame(control)
         file_settings.pack(side='left')
         label = tk.Label(file_settings, text='file name')
         label.pack()
-        self.file_name = tk.Entry(file_settings)
+        self.file_name = tk.Entry(file_settings, width=80)
         self.file_name.pack()
         save_button = tk.Button(file_settings, text='save file', command=self.phases_to_csv_file)
+        save_button.pack()
+        save_button = tk.Button(file_settings, text='load file', command=self.csv_file_to_phases)
+        save_button.pack()
+        save_button = tk.Button(file_settings, text='clear', command=self.clear)
         save_button.pack()
 
     def change_radius(self, new_val):
@@ -108,10 +112,22 @@ class App(tk.Tk):
         with open(self.file_name.get(), 'w') as file:
             for x in range(self.phases.shape[2]):
                 for y in range(self.phases.shape[1]):
-                    line = [y, x]
+                    line = [self.phases.shape[1] - y - 1, x]
                     for i in range(self.phase_count):
                         line.append(self.phases[i, y, x])
                     file.write(','.join(map(str, line)) + '\n')
+
+    def csv_file_to_phases(self):
+        with open(self.file_name.get(), 'r') as file:
+            for line in file.readlines():
+                y, x, *phases = map(int, line.split(','))
+                for i, p in enumerate(phases):
+                    self.phases[i, self.phases.shape[1] - y - 1, x] = p
+        self.update_canvas()
+
+    def clear(self):
+        self.phases = np.zeros((4, *self.phases_size), dtype=int)
+        self.update_canvas()
 
 
 def main():
