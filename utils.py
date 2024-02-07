@@ -62,33 +62,6 @@ def split_x_train(x_train, y_train, test_size):
     return new_x_train, new_y_train, x_val, y_val
 
 
-def convert_x_train(x_train, columns=None):
-    x_train = np.array(x_train)
-
-    t_count = len(np.unique(x_train[:, 0]))
-    mu_count = len(np.unique(x_train[:, 1]))
-
-    x_train = x_train[:t_count * mu_count]
-    x_train = x_train.reshape((t_count, mu_count, -1))
-    x_train = np.moveaxis(x_train, -1, 0)
-    if not columns:
-        columns = [2, 5, 9, 11, 12]
-    x_train = x_train[columns]  # 3, 6, 10, 12, 13
-
-    return x_train
-
-
-def load_data(data_folder, keys, columns=None):
-    x_train_list = []
-    y_train_list = []
-    for file_name in os.listdir(data_folder):
-        params = parse_params(file_name)
-        y_train_list.append(list(map(lambda k: params[k], keys)))
-        x_train = convert_x_train(read_file(os.path.join(data_folder, file_name)), columns)
-        x_train_list.append(x_train)
-    return np.array(x_train_list), np.array(y_train_list)
-
-
 # Generation of phase diagrams from the training set
 def load_data_phase(data_folder, keys, size):
     x_train_list = []
@@ -99,7 +72,7 @@ def load_data_phase(data_folder, keys, size):
 
     params_strings = set()
     for file_name in os.listdir(data_folder):
-        if 'result' in file_name:
+        if 'dat' in file_name:
             params_strings.add(file_name.split('_result')[0])
 
     for params_string in params_strings:
@@ -116,18 +89,26 @@ def load_data_phase(data_folder, keys, size):
 
         phases = phases[:, shift:size[0] + shift, shift:size[1] + shift]
 
+        with open(f'{data_folder}\\{params_string}_phases.csv', 'w') as file:
+            for x in range(phases.shape[2]):
+                for y in range(phases.shape[1]):
+                    line = [y, x]
+                    for i in range(phases.shape[0]):
+                        line.append(phases[i, x, y])
+                    file.write(','.join(map(str, line)) + '\n')
+
         palette = np.array([[255, 255, 255],
                             [255, 0, 0],
-                            [0, 255, 0],
                             [0, 0, 255],
-                            [255, 255, 0]], dtype=float)
+                            [255, 0, 255],
+                            [0, 255, 0]], dtype=float)
 
         image = np.zeros((*size, 3), dtype=float)
         for i in range(4):
-            image += palette[np.flip(phases[i].transpose(), 0) * (i + 1)] / 2
+            image += palette[np.flip(phases[i].transpose(), 0) * (i + 1)] / 4
 
         im = Image.fromarray(image.astype(np.uint8))
-        im.save(f'{data_folder}\\{params_string}_plot.png')
+        # im.save(f'{data_folder}\\{params_string}_plot.png')
 
         x_train_list.append(phases)
     x_train_list, y_train_list = np.array(x_train_list), np.array(y_train_list)
@@ -165,6 +146,6 @@ def read_phase_file(file_name):
 
     for y, x, *phases in array:
         for i, c in enumerate(phases):
-            nparray[i, y, x] = c
+            nparray[i, x, y] = c
 
     return nparray

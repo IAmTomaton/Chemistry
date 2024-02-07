@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib import pyplot as plt
 
 
 def sort_by_i(i, first, second):
@@ -35,14 +34,10 @@ def draw_phase(file, size, x_max, y_max):
             else:
                 curves[-1].append(list(map(float, point)))
 
-    # figure = plt.figure(figsize=(6, 6))
-    # a = figure.add_subplot(1, 2, 1)
     for curve in curves:
         if not curve:
             continue
         curve = close_curve(curve)
-        # X, Y = zip(*curve)
-        # a.plot(X, Y)
         for i in range(height):
             y = (i + 0.5) / size[1] * y_max
             intersections = []
@@ -65,9 +60,5 @@ def draw_phase(file, size, x_max, y_max):
 
                 for x in range(x_1, min(x_2 + 1, width)):
                     phase[x][i] = 1
-    # a = figure.add_subplot(1, 2, 2)
-    # a.matshow(np.flip(phase.transpose(), 0))
-    # plt.savefig(figure)
-    # plt.show()
 
     return phase

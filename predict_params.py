@@ -11,10 +11,12 @@ from norm_denorm import load_mean_disp, denorm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# name for mean and variance for normalization
 mean_disp_file = 'mean_disp.json'
 mean, dispersion = load_mean_disp(mean_disp_file)
 
 params = ['V', 'D', 'tp', 'tb']
+# paths to trained models
 models_files = [
     'models/size=64_params=V.pth',
     'models/size=64_params=D.pth',
@@ -38,7 +40,7 @@ def process_file(file_name):
         results.append(list(result[0])[0])
 
     results = denorm(np.array(results), mean, dispersion)
-    results = list(results.astype(float))
+    results = list(map(lambda p: round(p, 6), results.astype(float)))
     return results
 
 
@@ -66,6 +68,9 @@ def main():
     elif data_folder is not None:
         full_results = []
         for data_file in os.listdir(data_folder):
+            # if 'phases.csv' not in data_file or 'plot' in data_file:
+            #     continue
+            print(data_file)
             data_file = os.path.join(data_folder, data_file)
             results = process_file(data_file)
             full_results.append(results)
@@ -78,6 +83,8 @@ def main():
                 output.write(', '.join(params) + '\n')
                 for results in full_results:
                     output.write(', '.join(map(str, results)) + '\n')
+    else:
+        print("you must specify a file or folder with data")
 
 
 if __name__ == '__main__':
